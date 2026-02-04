@@ -1,0 +1,272 @@
+/// 722 血壓紀錄表格雙用版（數位+紙本）
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>722 居家血壓紀錄表 - 早安健康</title>
+   <script src="https://cdn.tailwindcss.com"></script>
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+   <style>
+       @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+
+
+       body {
+           font-family: 'Noto Sans TC', sans-serif;
+           background-color: #f3f4f6;
+           -webkit-print-color-adjust: exact;
+       }
+
+
+       /* A4 紙張模擬與列印設定 */
+       .page {
+           width: 210mm;
+           min-height: 297mm;
+           padding: 15mm;
+           margin: 10mm auto;
+           background: white;
+           box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+           position: relative;
+       }
+
+
+       /* 表格樣式 */
+       table {
+           width: 100%;
+           border-collapse: collapse;
+           margin-bottom: 1rem;
+       }
+      
+       th, td {
+           border: 1px solid #cbd5e1;
+           padding: 6px;
+           text-align: center;
+           vertical-align: middle;
+       }
+
+
+       th {
+           background-color: #78bf22; /* 主色 */
+           color: white;
+           font-weight: bold;
+           font-size: 0.9rem;
+       }
+
+
+       .bg-morning { background-color: #ecfccb; } /* 淺綠底 */
+       .bg-night { background-color: #e0f2fe; } /* 淺藍底 */
+      
+       /* 輸入框樣式 (讓網頁看起來像紙本) */
+       input[type="number"], input[type="text"], input[type="date"] {
+           width: 100%;
+           border: none;
+           background: transparent;
+           text-align: center;
+           font-size: 1rem;
+           color: #333;
+           outline: none;
+       }
+
+
+       /* 平均值欄位 */
+       .avg-cell {
+           font-weight: bold;
+           color: #d2672d;
+       }
+
+
+       /* 螢幕顯示的操作按鈕區 (列印時隱藏) */
+       .action-bar {
+           text-align: center;
+           margin-bottom: 20px;
+       }
+
+
+       /* 列印專用設定 */
+       @media print {
+           body { background: none; margin: 0; }
+           .page { margin: 0; box-shadow: none; border: none; width: 100%; }
+           .action-bar { display: none !important; }
+           /* 隱藏 placeholder 以便手寫 */
+           input::placeholder { color: transparent; }
+           /* 強制背景色列印 */
+           .bg-morning { background-color: #ecfccb !important; -webkit-print-color-adjust: exact; }
+           .bg-night { background-color: #e0f2fe !important; -webkit-print-color-adjust: exact; }
+           th { background-color: #78bf22 !important; color: white !important; -webkit-print-color-adjust: exact; }
+       }
+   </style>
+</head>
+<body>
+
+
+   <!-- 操作按鈕區 -->
+   <div class="action-bar pt-8">
+       <div class="inline-block bg-white p-4 rounded-xl shadow-lg border-t-4 border-[#78bf22]">
+           <h3 class="font-bold text-gray-700 mb-2">使用說明</h3>
+           <p class="text-sm text-gray-500 mb-4">你可以直接在網頁輸入數值(自動算平均)，<br>或是點擊列印按鈕，印出空白表格手寫。</p>
+           <button onclick="window.print()" class="bg-[#78bf22] hover:bg-[#6da81e] text-white px-6 py-2 rounded-full font-bold shadow transition flex items-center gap-2 mx-auto">
+               <i class="fa-solid fa-print"></i> 列印 / 另存 PDF
+           </button>
+       </div>
+   </div>
+
+
+   <!-- A4 頁面內容 -->
+   <div class="page">
+      
+       <!-- 表頭 -->
+       <div class="flex justify-between items-end mb-6 border-b-2 border-[#78bf22] pb-2">
+           <div class="flex items-center gap-3">
+               <img src="https://media-edh-cdn.h2u.io/image/article/default/w7cymNTKDuTpRSVpyfmx45eU8lr1lbxuGYWpBCO3.png" alt="Logo" class="h-8">
+               <div>
+                   <h1 class="text-2xl font-bold text-gray-800">722 居家血壓紀錄表</h1>
+                   <p class="text-xs text-gray-500">建議每三個月或回診前，連續測量 7 天</p>
+               </div>
+           </div>
+           <div class="text-right">
+               <div class="text-sm text-gray-600">
+                   姓名：<input type="text" placeholder="請輸入姓名" class="border-b border-gray-300 w-32 text-left px-1 focus:border-[#78bf22]">
+               </div>
+               <div class="text-sm text-gray-600 mt-1">
+                   日期：<input type="date" class="border-b border-gray-300 w-32 text-left px-1 focus:border-[#78bf22]"> 至 <input type="date" class="border-b border-gray-300 w-32 text-left px-1 focus:border-[#78bf22]">
+               </div>
+           </div>
+       </div>
+
+
+       <!-- 記錄表格 -->
+       <table>
+           <thead>
+               <tr>
+                   <th rowspan="2" style="width: 10%">天數</th>
+                   <th rowspan="2" style="width: 10%">時段</th>
+                   <th colspan="3">第一次測量</th>
+                   <th colspan="3">第二次測量 (間隔1分鐘)</th>
+                   <th colspan="2" style="background-color: #d2672d;">平均數值</th>
+               </tr>
+               <tr>
+                   <th class="text-xs">收縮壓</th>
+                   <th class="text-xs">舒張壓</th>
+                   <th class="text-xs">脈搏</th>
+                   <th class="text-xs">收縮壓</th>
+                   <th class="text-xs">舒張壓</th>
+                   <th class="text-xs">脈搏</th>
+                   <th class="text-xs bg-orange-100 text-[#d2672d]">收縮壓</th>
+                   <th class="text-xs bg-orange-100 text-[#d2672d]">舒張壓</th>
+               </tr>
+           </thead>
+           <tbody id="recordTable">
+               <!-- JS 將自動生成 7 天的行 -->
+           </tbody>
+       </table>
+
+
+       <!-- 底部資訊 -->
+       <div class="mt-6 grid grid-cols-2 gap-6">
+           <!-- 722 提醒 -->
+           <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm">
+               <h4 class="font-bold text-[#78bf22] mb-2"><i class="fa-solid fa-circle-info"></i> 測量小撇步 (722原則)</h4>
+               <ul class="list-disc pl-4 space-y-1 text-gray-600 text-xs">
+                   <li><strong>7</strong>：連續測量 7 天。</li>
+                   <li><strong>2</strong>：每天量 2 回（早上起床後、晚上睡覺前）。</li>
+                   <li><strong>2</strong>：每回量 2 次（間隔 1 分鐘），取平均值。</li>
+                   <li>測量前 30 分鐘不菸酒、不喝咖啡、不運動。</li>
+                   <li>測量時保持安靜、不說話、不憋尿、背靠椅背。</li>
+               </ul>
+           </div>
+          
+           <!-- 醫師筆記區 -->
+           <div class="border-2 border-dashed border-gray-300 p-4 rounded-lg">
+               <h4 class="font-bold text-gray-400 mb-2">醫師 / 藥師 建議欄：</h4>
+               <textarea class="w-full h-24 bg-transparent resize-none outline-none text-gray-600 text-sm" placeholder="(此處供醫護人員填寫或列印後手寫筆記)"></textarea>
+           </div>
+       </div>
+
+
+       <div class="text-center mt-8 text-xs text-gray-400">
+           &copy; 早安健康內容部製表 | 更多健康資訊請上 https://edh.tw
+       </div>
+   </div>
+
+
+   <script>
+       const tableBody = document.getElementById('recordTable');
+       const days = ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'];
+      
+       // 生成表格行
+       days.forEach((day, index) => {
+           // 早上行
+           const rowMorning = document.createElement('tr');
+           rowMorning.innerHTML = `
+               <td rowspan="2" class="font-bold text-gray-500 bg-white">${day}</td>
+               <td class="bg-morning text-xs font-bold text-green-800">早上 ☀️</td>
+               ${generateInputCells(index, 'am', 1)}
+               ${generateInputCells(index, 'am', 2)}
+               ${generateAvgCells(index, 'am')}
+           `;
+           tableBody.appendChild(rowMorning);
+
+
+           // 晚上行
+           const rowNight = document.createElement('tr');
+           rowNight.innerHTML = `
+               <td class="bg-night text-xs font-bold text-blue-800">晚上 🌙</td>
+               ${generateInputCells(index, 'pm', 1)}
+               ${generateInputCells(index, 'pm', 2)}
+               ${generateAvgCells(index, 'pm')}
+           `;
+           tableBody.appendChild(rowNight);
+       });
+
+
+       // 生成輸入格 HTML
+       function generateInputCells(dayIdx, time, round) {
+           const baseId = `d${dayIdx}_${time}_r${round}`;
+           return `
+               <td><input type="number" id="${baseId}_sys" placeholder="" oninput="calcAvg(${dayIdx}, '${time}')"></td>
+               <td><input type="number" id="${baseId}_dia" placeholder="" oninput="calcAvg(${dayIdx}, '${time}')"></td>
+               <td><input type="number" id="${baseId}_pul" placeholder=""></td>
+           `;
+       }
+
+
+       // 生成平均值格 HTML
+       function generateAvgCells(dayIdx, time) {
+           const baseId = `d${dayIdx}_${time}_avg`;
+           return `
+               <td class="bg-orange-50 avg-cell"><input type="text" id="${baseId}_sys" readonly tabindex="-1"></td>
+               <td class="bg-orange-50 avg-cell"><input type="text" id="${baseId}_dia" readonly tabindex="-1"></td>
+           `;
+       }
+
+
+       // 自動計算平均值
+       function calcAvg(dayIdx, time) {
+           const sys1 = parseFloat(document.getElementById(`d${dayIdx}_${time}_r1_sys`).value);
+           const sys2 = parseFloat(document.getElementById(`d${dayIdx}_${time}_r2_sys`).value);
+           const dia1 = parseFloat(document.getElementById(`d${dayIdx}_${time}_r1_dia`).value);
+           const dia2 = parseFloat(document.getElementById(`d${dayIdx}_${time}_r2_dia`).value);
+
+
+           const avgSysField = document.getElementById(`d${dayIdx}_${time}_avg_sys`);
+           const avgDiaField = document.getElementById(`d${dayIdx}_${time}_avg_dia`);
+
+
+           if (!isNaN(sys1) && !isNaN(sys2)) {
+               avgSysField.value = Math.round((sys1 + sys2) / 2);
+           } else {
+               avgSysField.value = '';
+           }
+
+
+           if (!isNaN(dia1) && !isNaN(dia2)) {
+               avgDiaField.value = Math.round((dia1 + dia2) / 2);
+           } else {
+               avgDiaField.value = '';
+           }
+       }
+   </script>
+</body>
+</html>
+
